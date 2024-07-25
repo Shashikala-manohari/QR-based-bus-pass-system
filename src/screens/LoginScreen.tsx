@@ -1,32 +1,45 @@
-import {deleteUser, signInWithEmailAndPassword} from 'firebase/auth';
 import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
+  TextInput,
+  TouchableOpacity,
   StyleSheet,
   Image,
-  TextInput,
   Alert,
+  Modal,
   ActivityIndicator,
 } from 'react-native';
-import {TouchableOpacity} from 'react-native';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+
+import BottomSheet from './BottomSheet';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {auth} from '../../firebase/firebaseInitUsers';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {deleteUser, signInWithEmailAndPassword} from 'firebase/auth';
+import {auth} from '../../firebase/firebaseinitPassengers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {auth3} from '../../firebase/firebaseinitPassengers';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {ScrollView} from 'react-native-gesture-handler';
 
 const LoginScreen = (a: any) => {
   const stack = a.navigation;
   const [userEmail, setUserEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const [isLogging, setIsLogging] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const loadCredentials = async () => {
       try {
         const storedEmail = await AsyncStorage.getItem('email');
-
-        if (storedEmail) {
+        const storedPassword = await AsyncStorage.getItem('password');
+        if (storedEmail && storedPassword) {
           setUserEmail(storedEmail);
+          setPassword(storedPassword);
+          setRememberMe(true);
         }
       } catch (error) {
         console.error('Error loading credentials:', error);
@@ -35,91 +48,45 @@ const LoginScreen = (a: any) => {
     loadCredentials();
   }, []);
 
-  return (
-    <View style={sty.container}>
-      <Image
-        style={sty.login_img}
-        source={require('../../assets/img/bus3.jpg')}
-        resizeMode="cover"
-      />
-      <KeyboardAwareScrollView keyboardShouldPersistTaps={'never'}>
-        <Text style={sty.header}>{'Welcome to\n'}<Text style={sty.header1}>Bustapp</Text>{'\nCommunity'}</Text>
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
-        <LoginField stack={stack} email={userEmail} setEmail={setUserEmail} />
-      </KeyboardAwareScrollView>
-    </View>
-  );
-};
+  const toggleRememberMe = async () => {
+    try {
+      if (rememberMe) {
+        await AsyncStorage.setItem('email', userEmail);
+        await AsyncStorage.setItem('password', password);
+      } else {
+        await AsyncStorage.removeItem('email');
+        await AsyncStorage.removeItem('password');
+      }
+    } catch (error) {
+      console.error('Error saving credentials:', error);
+    }
+  };
 
-function BottomSection(p: any) {
-  const stack = p.stack;
-
-  function GotoSignUp() {
-    stack.navigate('SignUp');
-  }
-
-  function GotoForgot() {
-    stack.navigate('Forgetpass');
-  }
-
-  return (
-    <View style={{flexDirection: 'row', marginTop: '25%', marginBottom: '5%'}}>
-      <View style={sty.bottom_view}>
-        <TouchableOpacity onPress={GotoSignUp}>
-          <Text style={sty.bottom_text01}>Sign Up</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={sty.bottom_view}>
-        <TouchableOpacity onPress={GotoForgot}>
-          <Text style={sty.bottom_text02}>Forget Password</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-function SignInButton(p: any) {
-  const stack = p.stack;
-  const email = p.u_email;
-  const password = p.u_pass;
-  const [isLogging, setIsLogging] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-
-  function GoToMain() {
-    setIsLogging(false);
-    stack.navigate('Main', {
-      scannerOn: false,
-      flashOn: false,
-      dataName: [],
-      dataValue: [],
-    });
-  }
+  const handleForgotPassword = () => {
+    setShowBottomSheet(true);
+  };
 
   function GoToHome() {
-    setIsLogging(false);
     stack.navigate('Home');
+  }
+
+  function GoToSignUp() {
+    stack.navigate('SignUp');
   }
 
   function AuthenticateUser() {
     setIsLogging(true);
-    signInWithEmailAndPassword(auth, email, password)
-      .then(async userCredential => {
+    signInWithEmailAndPassword(auth, userEmail, password)
+      .then(userCredential => {
         // Signed in
         const user = userCredential.user;
         if (user.emailVerified) {
-          await AsyncStorage.setItem('email', email);
           setIsVerified(true);
-          signInWithEmailAndPassword(auth3, email, password)
-            .then(userCredential => {
-              // Signed in
-            })
-            .catch(error => {
-              const errorCode = error.code;
-              const alert = 'Error code : ' + errorCode.split('/')[1];
-              Alert.alert('Error', alert);
-              setIsLogging(false);
-            });
+          setIsLogging(false);
           GoToHome();
         } else {
           setIsLogging(false);
@@ -141,155 +108,320 @@ function SignInButton(p: any) {
   }
 
   return (
-    <View style={{flexDirection: 'row', marginTop: 30}}>
-      <View style={sty.sign_in_view01}>
-        <Text style={sty.sign_in_text}>Sign in</Text>
-      </View>
-      <TouchableOpacity onPress={AuthenticateUser}>
-        <View style={sty.sign_in_icon}>
-          {isLogging ? (
-            <ActivityIndicator animating={true} color="#1fcc75" size={32} />
-          ) : (
-            <Icon name="arrow-forward" size={32} color="white" />
-          )}
+    <View style={styles.container}>
+      <Image
+        style={{width: '100%', height: '100%', position: 'absolute'}}
+        source={require('../../assets/img/app_background.png')}
+        resizeMode="cover"
+      />
+      <Modal visible={isVisible} transparent={true} animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}>
+          <View
+            style={{
+              backgroundColor: 'white',
+              height: '90%',
+              width: '90%',
+              borderRadius: 30,
+            }}>
+            <View
+              style={{marginTop: 20, alignItems: 'flex-end', marginRight: 30}}>
+              <TouchableOpacity onPress={() => setIsVisible(false)}>
+                <Icon name="close" color={'black'} size={25} />
+              </TouchableOpacity>
+            </View>
+
+            <Text
+              style={{
+                color: '#3b3a69',
+                fontSize: 22,
+                fontWeight: '600',
+                marginTop: 20,
+                marginBottom: 30,
+                textAlign: 'center',
+                marginHorizontal: 30,
+              }}>
+              Welcome to QR Bus Pass System
+            </Text>
+
+            <View style={{flex: 1, marginBottom: 50}}>
+              <SafeAreaView>
+                <ScrollView>
+                  <Text
+                    style={{
+                      color: 'black',
+                      marginHorizontal: 40,
+                      fontSize: 18,
+                      textAlign: 'center',
+                    }}>
+                    Introducing QR Bus Pass System, the all in one solution for
+                    comfortable bus travel. Our app facilitates the travel by
+                    combining registration, payment, and fare calculation into
+                    one user-friendly platform.{'\n\n'}
+                    Registering for our app is effortless, simply create a new
+                    account with a username and password. Upon registration,
+                    passengers receive a unique QR code, serving as their
+                    electronic bus pass.{'\n\n'}
+                    Need to reload your account?🤔{'\n\n'} No problem!{'\n'} You
+                    can easily do so using card payment or bank deposit. Our app
+                    also offers facilities for fair calculation and fund
+                    transfer. If you happen to lose your QR code, don't worry!
+                    you can request a new one right here.{'\n\n'}
+                    Say goodbye👋 to paper tickets{'\n'} Join us today and
+                    enhance your bus travel experience with QR Bus Pass System.
+                  </Text>
+                </ScrollView>
+              </SafeAreaView>
+            </View>
+          </View>
         </View>
+      </Modal>
+      <TouchableOpacity
+        style={styles.settingsIcon}
+        onPress={() => setIsVisible(true)}>
+        <Icon name="help-circle-outline" size={30} color="#FFFFFF" />
       </TouchableOpacity>
-    </View>
-  );
-}
+      <Modal
+        visible={isLogging}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {}}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}>
+          <ActivityIndicator size={80} color="#0000ff" />
+        </View>
+      </Modal>
+      <View style={styles.rectangle}>
+        <KeyboardAwareScrollView>
+          <View style={styles.content}>
+            <Text style={styles.welcomeText}>Welcome</Text>
+            <Text style={styles.signInText}>Sign in to Continue</Text>
 
-function LoginField(p: any) {
-  const stack = p.stack;
-  const [userPassword, setUserPassword] = useState('');
+            <View style={styles.inputContainer}>
+              <Icon
+                name="person-outline"
+                size={20}
+                color="#FFFFFF"
+                style={styles.iconcontainer}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={userEmail}
+                onChangeText={setUserEmail}
+                placeholderTextColor={'#7d7d85'}
+                cursorColor={'#606066'}
+              />
+            </View>
 
-  return (
-    <View style={sty.login_view}>
-      <View style={sty.login_field_uname}>
-        <TextInput
-          style={sty.text_input}
-          placeholder="Your Email"
-          placeholderTextColor={'#7d7d85'}
-          cursorColor={'#606066'}
-          value={p.email}
-          onChangeText={v => p.setEmail(v)}
-        />
+            <View style={styles.inputContainer}>
+              <Icon
+                name="lock-closed-outline"
+                size={20}
+                color="#FFFFFF"
+                style={styles.iconcontainer}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                placeholderTextColor={'#7d7d85'}
+                cursorColor={'#606066'}
+              />
+              <TouchableOpacity onPress={togglePasswordVisibility}>
+                {showPassword ? (
+                  <Icon
+                    name="eye-off-outline"
+                    size={20}
+                    color="#000"
+                    style={styles.eyeIcon}
+                  />
+                ) : (
+                  <Icon
+                    name="eye-outline"
+                    size={20}
+                    color="#000"
+                    style={styles.eyeIcon}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.row}>
+                <TouchableOpacity
+                  onPressIn={() => setRememberMe(!rememberMe)}
+                  onPressOut={toggleRememberMe}
+                  style={styles.checkboxContainer}>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      rememberMe && styles.checkedCheckbox,
+                    ]}
+                  />
+                </TouchableOpacity>
+                <Text style={styles.rememberText}>Remember me</Text>
+                <TouchableOpacity onPress={handleForgotPassword}>
+                  <Text style={styles.forgotText}>Forgot Password</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={AuthenticateUser}>
+              <Text style={styles.loginButtonText}>LOGIN</Text>
+            </TouchableOpacity>
+            <Text style={styles.createAccountText}>Don't have account?</Text>
+            <TouchableOpacity onPress={GoToSignUp}>
+              <Text style={styles.createAccountText2}>
+                Create a new account
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAwareScrollView>
       </View>
 
-      <View style={sty.login_field_pass}>
-        <TextInput
-          style={sty.text_input}
-          placeholder="Your Password"
-          placeholderTextColor={'#7d7d85'}
-          cursorColor={'#606066'}
-          secureTextEntry={true}
-          onChangeText={v => setUserPassword(v)}
-        />
-      </View>
-      <SignInButton u_email={p.email} u_pass={userPassword} stack={stack} />
-      <BottomSection stack={stack} />
+      {/* Bottom Sheet */}
+      {showBottomSheet && <BottomSheet setStatus={setShowBottomSheet} />}
     </View>
   );
-}
+};
 
-// define your styles
-const sty = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
+const styles = StyleSheet.create({
+  rectangle: {
+    borderTopRightRadius: 45,
+    borderTopLeftRadius: 45,
+    backgroundColor: '#FFFFFF',
+    top: 120,
+    flex: 2,
+    marginTop: 50,
   },
-  login_img: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  header: {
-    fontSize: 35,
-    color: 'white',
-    fontWeight: '700',
-    marginTop: 100,
-    marginLeft: 20,
-  },
-  header1: {
-    fontSize: 35,
-    color: '#92c244',
-    fontWeight: '700',
-    marginTop: 100,
-    marginLeft: 20,
-  },
-  login_field_uname: {
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 20,
-    height: 60,
-    marginHorizontal: 30,
-    justifyContent: 'center',
-    paddingLeft: 20,
-    marginTop: 10,
-    elevation: 5,
-  },
-  login_field_pass: {
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 20,
-    height: 60,
-    marginHorizontal: 30,
-    justifyContent: 'center',
-    paddingLeft: 20,
-    marginTop: 20,
-    elevation: 5,
-  },
-  text_input: {
-    fontSize: 16,
-    color: 'black',
-  },
-  login_view: {
-    marginTop: 100,
-  },
-  sign_in_view01: {
-    flex: 1,
-    height: 70,
-    justifyContent: 'center',
-  },
-  sign_in_text: {
-    fontSize: 25,
-    fontWeight: '700',
-    color: 'white',
-    marginLeft: 40,
-  },
-  sign_in_icon: {
-    width: 50,
-    height: 50,
-    backgroundColor: '#367cfe',
-    marginRight: 40,
-    borderRadius: 100,
+  content: {
+    marginTop: 70,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 150,
+  },
+  container: {
+    backgroundColor: 'white',
+    flex: 1,
+  },
+  settingsIcon: {
+    position: 'absolute',
     top: 10,
-    elevation: 5,
+    right: 20,
   },
-  sign_in_view02: {
-    height: 70,
+  welcomeText: {
+    fontFamily: 'Montserrat-Bold',
+    fontSize: 34,
+    fontWeight: 'bold',
+    color: '#747FFD',
+  },
+  signInText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 16,
+    marginBottom: 40,
+    color: '#747FFD',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#747FFD',
+    borderRadius: 25,
+    paddingHorizontal: 10,
+  },
+  input: {
     flex: 1,
+    fontFamily: 'Poppins-Regular',
+    color: 'black',
+  },
+  eyeIcon: {
+    marginRight: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    marginBottom: 15,
+    width: '100%',
+  },
+  iconcontainer: {
     justifyContent: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    width: 30,
+    height: 30,
+    backgroundColor: '#747FFD',
+    borderRadius: 25,
+    marginRight: 20,
+    paddingLeft: 5,
+    paddingTop: 3,
   },
-  bottom_text01: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: 'white',
-    marginLeft: 40,
-    textAlign: 'left',
+  rememberText: {
+    flex: 8,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#747FFD',
+    marginLeft: 10,
   },
-  bottom_text02: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: 'white',
-    marginRight: 40,
-    textAlign: 'right',
-  },
-  bottom_view: {
+  forgotText: {
     flex: 1,
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    color: '#747FFD',
+    marginRight: 10,
   },
-  indicator: {},
+  loginButton: {
+    backgroundColor: '#747FFD',
+    paddingVertical: 10,
+    paddingHorizontal: 50,
+    borderRadius: 25,
+    marginBottom: 15,
+    marginTop: 25,
+  },
+  loginButtonText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 16,
+    color: '#fff',
+  },
+  createAccountText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 16,
+    color: '#747FFD',
+    marginTop: 20,
+  },
+  createAccountText2: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#747FFD',
+  },
+  checkboxContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: '#747FFD',
+    borderRadius: 4,
+  },
+  checkedCheckbox: {
+    backgroundColor: '#747FFD',
+  },
 });
 
-//make this component available to the app
 export default LoginScreen;

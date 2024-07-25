@@ -1,28 +1,140 @@
+import React, {useEffect, useState} from 'react';
 import {
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
   View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
+
 import Icon from 'react-native-vector-icons/Ionicons';
-import LocSelector from './locSelector';
-import {Text} from 'react-native-paper';
-import {useState} from 'react';
-import Scanner from './Scanner';
+import {auth, db3} from '../../firebase/firebaseinitPassengers';
+import NavigationBar from '../components/navigationBar';
+import {ScrollView} from 'react-native-gesture-handler';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {doc, getDoc, setDoc, where} from 'firebase/firestore';
+import RoutesMenu from '../components/DropdownMenu';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Home = (a: any) => {
   const stack = a.navigation;
-  const [location, setLocation] = useState('');
-  const [pickup, setpickup] = useState('none');
-  const [drop, setDrop] = useState('none');
-  const [charge, setCharge] = useState(0.0);
-  const [count, setCount] = useState(0);
-  const [remainingStops,setRemainningStops]=useState(0);
+  const [searchedName, setSearchedName] = useState('');
+  const [amount, setAmount] = useState('0');
+  const [names, setNames] = useState<string[]>([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [previousSelectedId, setPreviousSelectedId] = useState('');
+  const [isRefresh, setIsRefresh] = useState(false);
+  const [isLogging, setIsLogging] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const date = new Date();
+  const currentDate = date.getMonth() + '/' + date.getDate();
+  const currentTime =
+    date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLogging(true);
+      const storedSelectedId = await AsyncStorage.getItem('selectedId');
+      if (storedSelectedId) {
+        setPreviousSelectedId(storedSelectedId);
+        setSelectedId(storedSelectedId);
+        const getAmount = await getDoc(doc(db3, 'Users', storedSelectedId));
+        const userAmount = getAmount.data()?.amount ?? '0';
+        setAmount(userAmount);
+      }
+      setIsLogging(false);
+    };
+    loadData();
+  }, []);
+
+  const HandleRefresh = () => {
+    setIsRefresh(!isRefresh);
+  };
+  useEffect(() => {
+    const fetchAmount = async () => {
+      setIsLogging(true);
+      try {
+        if (selectedId) {
+          await AsyncStorage.setItem('selectedId', selectedId);
+        }
+        const querySnapshot = await getDoc(
+          doc(db3, 'Users', auth.currentUser?.uid ?? ''),
+        );
+
+        if (querySnapshot.data()?.members) {
+          const idArray = querySnapshot.data()?.members;
+          setNames(idArray);
+          if (selectedId != '') {
+            const getAmount = await getDoc(doc(db3, 'Users', selectedId));
+            const userAmount = getAmount.data()?.amount ?? '0';
+            setAmount(userAmount);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching amount:', error);
+        // Handle error
+      }
+      setIsLogging(false);
+    };
+    fetchAmount();
+  }, [isRefresh, selectedId]);
+
+  useEffect(() => {
+    const addAccount = async () => {
+      try {
+        const id: string = auth.currentUser?.uid ?? '';
+        const docRef = doc(db3, 'Users', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+        } else {
+          setDoc(doc(db3, 'Users', id), {email: auth.currentUser?.email});
+        }
+      } catch (error) {
+        console.error('Error fetching addUser:', error);
+      }
+    };
+    addAccount();
+  }, []);
+
+  function GoToReload() {
+    stack.navigate('Reload');
+  }
+
+  function GoToAddMembers() {
+    setIsVisible(false);
+    stack.navigate('AddMembers');
+  }
+
+  function GoToAddOldMember() {
+    setIsVisible(false);
+    stack.navigate('AddOldMember');
+  }
+
+  function GoToFairCalculation() {
+    stack.navigate('FairCalculation');
+  }
 
   function GoToMenu() {
     stack.navigate('Back');
+  }
+
+  function GoToMyDetails() {
+    stack.navigate('MyDetails', {userId: selectedId, userAmount: amount});
+  }
+
+  function GoToRequestQR() {
+    stack.navigate('RequestQR');
+  }
+
+  function GoToTransaction() {
+    stack.navigate('Transactions', {userId: selectedId, userAmount: amount});
+  }
+
+  function GoToFundTransfer() {
+    stack.navigate('FundTransfer');
   }
 
   return (
@@ -32,46 +144,296 @@ const Home = (a: any) => {
         source={require('../../assets/img/app_background.png')}
         resizeMode="cover"
       />
+      <Modal
+        visible={isLogging}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {}}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}>
+          <ActivityIndicator size={80} color="#0000ff" />
+        </View>
+      </Modal>
+      <Modal visible={isVisible} transparent={true} animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          }}>
+          <View
+            style={{
+              backgroundColor: 'white',
+              height: '80%',
+              width: '90%',
+              borderRadius: 30,
+            }}>
+            <View
+              style={{marginTop: 20, alignItems: 'flex-end', marginRight: 30}}>
+              <TouchableOpacity onPress={() => setIsVisible(false)}>
+                <Icon name="close" color={'black'} size={25} />
+              </TouchableOpacity>
+            </View>
 
+            <Text
+              style={{
+                color: '#3b3a69',
+                fontSize: 22,
+                fontWeight: '600',
+                marginTop: 20,
+                marginBottom: 30,
+                textAlign: 'center',
+                marginHorizontal: 30,
+              }}>
+              Welcome !
+            </Text>
+
+            <View style={{flex: 1, marginBottom: 50}}>
+              <SafeAreaView>
+                <ScrollView>
+                  <Text
+                    style={{
+                      color: 'black',
+                      marginHorizontal: 40,
+                      fontSize: 18,
+                      textAlign: 'center',
+                    }}>
+                    If you are want create bus pass
+                  </Text>
+                  <View
+                    style={{
+                      alignItems: 'center',
+                    }}>
+                    <TouchableOpacity onPress={GoToAddMembers}>
+                      <View style={styles.buttonContainer}>
+                        <Text style={styles.buttonText}>Create a pass</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                  <Text
+                    style={{
+                      color: 'black',
+                      marginHorizontal: 40,
+                      fontSize: 18,
+                      textAlign: 'center',
+                      marginTop: 30,
+                    }}>
+                    {'OR\n\n'}Add an existing user
+                  </Text>
+                  <View
+                    style={{
+                      alignItems: 'center',
+                    }}>
+                    <TouchableOpacity onPress={GoToAddOldMember}>
+                      <View style={styles.buttonContainer}>
+                        <Text style={styles.buttonText}>Add a member</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                  <Text
+                    style={{
+                      color: 'red',
+                      marginHorizontal: 40,
+                      fontSize: 16,
+                      textAlign: 'center',
+                      marginTop: 30,
+                    }}>
+                    {'*NOTE:- '} Lorem ipsum, dolor sit amet consectetur
+                    adipisicing elit. Ipsa, reprehenderit obcaecati incidunt est
+                    impedit porro repellat harum optio, sapiente ipsam animi
+                    repudiandae, in cumque minima quod sequi rem veritatis
+                    libero?
+                  </Text>
+                </ScrollView>
+              </SafeAreaView>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <TouchableOpacity style={styles.settingsIcon} onPress={GoToMenu}>
         <Icon name="settings-outline" size={20} color="#FFFFFF" />
       </TouchableOpacity>
-      <View style={{zIndex: 2, alignItems: 'center'}}>
-        <Scanner
-          location={location}
-          pickUp={setpickup}
-          drop={setDrop}
-          charge={setCharge}
-          count={setCount}
-        />
-      </View>
-      <View style={styles.headerContainer}>
-        <View style={styles.headerContent}>
-          <View style={styles.cont1}>
-            <Text style={styles.headerText}>Number of{'\n'}Passengers</Text>
-            <Text style={styles.headerText}>Remaining stops</Text>
-          </View>
-          <View style={styles.cont1}>
-            <Text style={styles.headerTextHi}>{count}</Text>
-            <Text style={styles.headerTextHi}>{remainingStops}</Text>
-          </View>
-          <View style={styles.notificationBar}>
-            <Text style={styles.notificationText}>
-              {pickup + ' - ' + drop + ' : Rs.' + charge}
-            </Text>
-          </View>
+      <View style={{flexDirection: 'row', marginTop: 100, height: 50}}>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            backgroundColor: 'white',
+            borderRadius: 10,
+            marginLeft: 20,
+            elevation: 5,
+          }}>
+          <Text style={styles.headerTextHi}>Hi !</Text>
+          <RoutesMenu
+            nameArray={names}
+            placeHolder={previousSelectedId}
+            setOnChange={(selectedText: any) => setSelectedId(selectedText)}
+            setLogin={setIsLogging}
+          />
         </View>
+
+        <View style={{flex: 1}}></View>
       </View>
 
+      <View style={styles.headerContainer}>
+        <View style={{flexDirection: 'row'}}>
+          <Text style={styles.headerText}>Your Balance</Text>
+          <TouchableOpacity style={{flex: 1}} onPress={HandleRefresh}>
+            <Icon
+              name="refresh-outline"
+              size={22}
+              color="black"
+              style={styles.refreshIcon}
+            />
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.balanceText}>Rs. {amount + '.00'}</Text>
+        <Text style={styles.balanceTimeText}>
+          Last update: {currentTime + ' ' + currentDate}
+        </Text>
+      </View>
       <View style={styles.rectangle}>
-        <SafeAreaView style={{marginTop: 30}}>
+        <SafeAreaView style={{marginTop: 35}}>
           <ScrollView>
             <View style={styles.content}>
-              <LocSelector loc={setLocation} remainStops={setRemainningStops} stack={stack} />
+              <View>
+                <Text style={styles.searchHeaderText}>
+                  Where would you like to go?
+                </Text>
+                <View style={styles.inputContainer}>
+                  <Icon
+                    name="search-outline"
+                    size={20}
+                    color="black"
+                    style={styles.iconcontainer}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Search here..."
+                    value={searchedName}
+                    onChangeText={setSearchedName}
+                    placeholderTextColor={'#7d7d85'}
+                    cursorColor={'#606066'}
+                  />
+                </View>
+              </View>
+              <Text style={styles.searchHeaderText}>Quick Access</Text>
+              <View
+                style={{
+                  borderBottomColor: '#bbc4c9',
+                  borderBottomWidth: 1,
+                  width: '100%',
+                }}
+              />
+              <View style={styles.menuContainer}>
+                <View style={styles.menuContainer1}>
+                  <View style={styles.menuItem}>
+                    <TouchableOpacity onPress={GoToReload}>
+                      <Icon
+                        name="card-outline"
+                        size={48}
+                        color="white"
+                        style={styles.icon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.menuItem}>
+                    <TouchableOpacity onPress={() => setIsVisible(true)}>
+                      <Icon
+                        name="person-add-outline"
+                        size={45}
+                        color="white"
+                        style={styles.icon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.menuItem}>
+                    <TouchableOpacity onPress={GoToFundTransfer}>
+                      <Icon
+                        name="cash-outline"
+                        size={48}
+                        color="white"
+                        style={styles.icon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View style={styles.menuContainer2}>
+                  <Text style={styles.menuIconText}>Reload</Text>
+                  <Text style={styles.menuIconText}>Add Members</Text>
+                  <Text style={styles.menuIconText}>Fund Transfer</Text>
+                </View>
+                <View style={styles.menuContainer1}>
+                  <View style={styles.menuItem}>
+                    <TouchableOpacity onPress={GoToFairCalculation}>
+                      <Icon
+                        name="calculator-outline"
+                        size={48}
+                        color="white"
+                        style={styles.icon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.menuItem}>
+                    <TouchableOpacity onPress={GoToTransaction}>
+                      <Icon
+                        name="receipt-outline"
+                        size={48}
+                        color="white"
+                        style={styles.icon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.menuItem}>
+                    <TouchableOpacity onPress={GoToMyDetails}>
+                      <Icon
+                        name="person-outline"
+                        size={48}
+                        color="white"
+                        style={styles.icon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View style={styles.menuContainer2}>
+                  <Text style={styles.menuIconText}>Fair Calculation</Text>
+                  <Text style={styles.menuIconText}>Transaction History</Text>
+                  <Text style={styles.menuIconText}>My Details</Text>
+                </View>
+                <View style={styles.menuContainer1}>
+                  <View style={styles.menuItem3}></View>
+                  <View style={styles.menuItem}>
+                    <TouchableOpacity onPress={GoToRequestQR}>
+                      <Icon
+                        name="qr-code-outline"
+                        size={48}
+                        color="white"
+                        style={styles.icon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.menuItem3}></View>
+                </View>
+                <View style={styles.menuContainer2}>
+                  <Text style={styles.menuIconText}></Text>
+                  <TouchableOpacity onPress={GoToRequestQR}>
+                  <Text style={styles.menuIconText}>Get A new QR</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.menuIconText}></Text>
+                </View>
+              </View>
             </View>
           </ScrollView>
         </SafeAreaView>
       </View>
+
+      <NavigationBar routeName={a.route.name} stack={stack} />
     </View>
   );
 };
@@ -80,13 +442,11 @@ const styles = StyleSheet.create({
   rectangle: {
     borderTopRightRadius: 45,
     borderTopLeftRadius: 45,
-    backgroundColor: 'rgba(255,255,255,1)',
+    backgroundColor: '#FFFFFF',
     flex: 2,
-    marginTop: 30,
-    elevation: 5,
   },
   content: {
-    marginTop: 0,
+    marginTop: 50,
     marginBottom: 150,
     justifyContent: 'center',
     paddingHorizontal: 20,
@@ -97,9 +457,8 @@ const styles = StyleSheet.create({
   },
   settingsIcon: {
     position: 'absolute',
-    top: 20,
+    top: 10,
     right: 20,
-    zIndex: 3,
   },
   iconcontainer: {
     justifyContent: 'center',
@@ -135,49 +494,31 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     backgroundColor: 'white',
-    marginHorizontal: 20,
-    marginTop: 0,
+    marginBottom: 0,
+    marginHorizontal: 40,
     borderRadius: 10,
-    height: 150,
     elevation: 5,
     zIndex: 1,
+    top: 30,
   },
-  notificationBar: {
-    justifyContent: 'center',
-    marginTop: 10,
-    height: 30,
-    width: '100%',
-    borderColor: 'red',
-    borderWidth: 1,
-    borderRadius: 10,
-  },
-  notificationText: {
-    fontFamily: 'Poppins-Regular',
-    fontSize: 14,
-    color: 'black',
-    marginHorizontal: 20,
-    fontWeight: '800',
-  },
-  headerContent: {
-    marginHorizontal: 20,
-    marginVertical: 20,
-  },
-  cont1: {flexDirection: 'row', alignItems: 'center'},
   headerTextHi: {
     flex: 1,
     fontFamily: 'Poppins-Regular',
-    fontSize: 22,
-    color: 'red',
+    fontSize: 16,
+    marginTop: 15,
+    color: 'black',
     fontWeight: '700',
-    textAlign: 'center',
+    textAlign: 'left',
+    marginLeft: 20,
   },
   headerText: {
-    flex: 1,
+    flex: 2,
     fontFamily: 'Poppins-Regular',
-    fontSize: 14,
+    fontSize: 20,
+    marginTop: 15,
     color: 'black',
-    fontWeight: '500',
-    textAlign: 'center',
+    fontWeight: '700',
+    textAlign: 'right',
   },
   refreshIcon: {
     flex: 1,

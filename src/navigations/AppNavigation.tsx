@@ -1,93 +1,48 @@
 import React from 'react';
-import LoginScreen from '../screens/LoginScreen';
-import ForgetPassScreen from '../screens/ForgetPassScreen';
 import {
   CardStyleInterpolators,
   createStackNavigator,
 } from '@react-navigation/stack';
+import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
-import MainScreen from '../screens/MainScreen';
-import LocationSelectorSrc from '../screens/LocationSelectorSrc';
-import BusRegisterSrc from '../screens/BusRegisterSrc';
-import QrScanner from '../screens/QrScanner';
-import MenuScreen from '../screens/MenuScreen';
+import ReloadByCard from '../screens/Reload_byCard';
 import Home from '../screens/Home';
-import StatReport from '../screens/StatReport';
-import BalanceScreen from '../screens/BalanceScreen';
+import AddMembers from '../screens/AddMembers';
+import FairCalculation from '../screens/FairCalculation';
+import QRCodeDownload from '../screens/QRCodeDownload';
+import MenuScreen from '../screens/SideMenu';
+import RequestNewQr from '../screens/RequestNewQR';
+import MyDetails from '../screens/MyDetails';
+import TransactionHistory from '../screens/Transaction';
+import FundTransfer from '../screens/FundTransfer_enterDetails';
+import AddOldMember from '../screens/AddOldMember';
 
 const Stack = createStackNavigator();
 
 const AppNavigation = () => {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen
-        name="Login"
-        component={LoginScreen}
-        options={{
-          cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
-        }}
-      />
-      <Stack.Screen
-        name="SignUp"
-        component={SignUpScreen}
-        options={{
-          cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
-        }}
-      />
-      <Stack.Screen
-        name="Forgetpass"
-        component={ForgetPassScreen}
-        options={{
-          cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
-        }}
-      />
-
-      <Stack.Screen
-        name="Home"
-        component={Home}
-    
-      />
   
-      <Stack.Screen
-        name="Main"
-        component={MainScreen}
-        options={{
-          cardStyleInterpolator:
-            CardStyleInterpolators.forFadeFromBottomAndroid,
-        }}
-      />
-      <Stack.Screen
-        name="BusReg"
-        component={BusRegisterSrc}
-        options={{
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-        }}
-      />
-      <Stack.Screen
-        name="Statistics"
-        component={StatReport}
-        options={{
-          cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
-        }}
-      />
-      <Stack.Screen
-        name="Balance"
-        component={BalanceScreen}
-        options={{
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-        }}
-      />
-      <Stack.Screen
-        name="LocSelector"
-        component={LocationSelectorSrc}
-        options={{
-          cardStyleInterpolator:
-            CardStyleInterpolators.forFadeFromBottomAndroid,
-        }}
-      />
-      <Stack.Screen name="QrScanner" component={QrScanner} />
-
-      <Stack.Screen
+      <Stack.Navigator screenOptions={{headerShown: false}}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen
+          name="SignUp"
+          component={SignUpScreen}
+          options={{
+            cardStyleInterpolator:
+              CardStyleInterpolators.forModalPresentationIOS,
+          }}
+        />
+        <Stack.Screen name="Reload" component={ReloadByCard} />
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="AddMembers" component={AddMembers} />
+        <Stack.Screen name="AddOldMember" component={AddOldMember} />
+        <Stack.Screen name="FairCalculation" component={FairCalculation} />
+        <Stack.Screen name="QRCodeDownload" component={QRCodeDownload} />
+        <Stack.Screen name="RequestQR" component={RequestNewQr} />
+        <Stack.Screen name="MyDetails" component={MyDetails} />
+        <Stack.Screen name="Transactions" component={TransactionHistory} />
+        <Stack.Screen name="FundTransfer" component={FundTransfer} />
+        <Stack.Screen
         name="Back"
         component={MenuScreen}
         options={{
@@ -99,7 +54,8 @@ const AppNavigation = () => {
           headerStyle: {height: 80},
         }}
       />
-    </Stack.Navigator>
+      </Stack.Navigator>
+  
   );
 };
 

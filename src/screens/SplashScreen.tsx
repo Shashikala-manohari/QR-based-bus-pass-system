@@ -1,7 +1,5 @@
-import {View, Text, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet, Image, ActivityIndicator} from 'react-native';
 import React, {useEffect, useState} from 'react';
-import {auth, db} from '../../firebase/firebaseInitUsers';
-import {ActivityIndicator} from 'react-native-paper';
 
 const SplashScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -23,19 +21,12 @@ const SplashScreen = () => {
         <View style={styles.container}>
           <Image
             style={styles.image2}
-            source={require('../../assets/img/bus1.jpg')}
+            source={require('../../assets/img/splash_template.png')}
             resizeMode="cover"
           />
 
-          <View style={styles.imageContainer1}>
-            <Image
-              style={styles.image1}
-              source={require('../../assets/img/splash_template.jpg')}
-            />
-          </View>
-
           <View style={styles.indicator}>
-            <ActivityIndicator animating={true} color="#1fcc75" size={80} />
+            <ActivityIndicator animating={true} color="white" size={80} />
           </View>
         </View>
       )}
@@ -67,7 +58,8 @@ const styles = StyleSheet.create({
   },
   indicator: {
     alignItems: 'center',
-    marginTop:200
+    marginVertical:'auto',
+    marginBottom:150, 
   },
 });
 

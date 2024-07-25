@@ -1,29 +1,23 @@
-import {doc, getDoc, setDoc} from 'firebase/firestore';
+import {doc, getDoc} from 'firebase/firestore';
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import SelectDropdown from 'react-native-select-dropdown';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import {auth, db3} from '../../firebase/firebaseinitPassengers';
-import Icon from 'react-native-vector-icons/Ionicons';
+import {db3} from '../../firebase/firebaseinitPassengers';
 
-const RoutesMenu = (p: any) => {
+const MembersMenu = (p: any) => {
   const array = p.nameArray;
   const placeholder = p.placeHolder;
   const onChange = p.setOnChange;
   const [nameMap, setNameMap] = useState<{[key: string]: string}>({});
-  const setIsLogging = p.setLogin;
-  const initSelectedName=(placeholder)?nameMap[placeholder]:'User';
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLogging(true);
       const map: {[key: string]: string} = {};
       for (const item of array) {
         const name = await fetchName(item);
         map[item] = name || ''; // Set the name in the map
       }
       setNameMap(map);
-      setIsLogging(false);
     };
     fetchData();
   }, [array]); // Run effect when array changes
@@ -31,7 +25,7 @@ const RoutesMenu = (p: any) => {
   const fetchName = async (item: string) => {
     try {
       const snapshot = await getDoc(doc(db3, 'Users', item));
-      return snapshot.data()?.nick_name || '';
+      return snapshot.data()?.name || '';
     } catch (error) {
       console.error('Error fetching name for item:', item, error);
       return '';
@@ -48,15 +42,8 @@ const RoutesMenu = (p: any) => {
           return (
             <View style={styles.dropdownButtonStyle}>
               <Text style={styles.dropdownButtonTxtStyle}>
-                {selectedItemName || initSelectedName}
+                {selectedItemName || nameMap[array[0]]}
               </Text>
-              {
-                <Icon
-                  name="caret-down-circle-outline"
-                  size={20}
-                  color="black"
-                />
-              }
             </View>
           );
         }}
@@ -79,14 +66,15 @@ const RoutesMenu = (p: any) => {
   );
 };
 
-export default RoutesMenu;
+export default MembersMenu;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 2,
-    alignItems: 'flex-end',
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 10,
-    marginBottom: 0,
+    marginBottom: 10,
   },
   header: {
     position: 'absolute',
@@ -104,26 +92,25 @@ const styles = StyleSheet.create({
     color: '#151E26',
   },
   dropdownButtonStyle: {
-    width: 120,
+    width: 200,
     height: 30,
-    backgroundColor: 'rgba(255,255,255,0)',
+    backgroundColor: 'rgba(0,0,0,0)',
     borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 12,
-    marginHorizontal: 20,
+    marginRight:100
   },
   dropdownButtonTxtStyle: {
     flex: 1,
-    fontFamily: 'Poppins-Regular',
-    fontSize: 18,
-    color: 'blue',
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#151E26',
     textAlign: 'left',
   },
   dropdownMenuStyle: {
-    backgroundColor: 'white',
+    backgroundColor: '#E9ECEF',
     borderRadius: 8,
   },
   dropdownSearchInputStyle: {
