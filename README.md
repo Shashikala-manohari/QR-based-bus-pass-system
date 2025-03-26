@@ -1,4 +1,4 @@
-# QR-Based Bus Pass System
+# QR-Based Bus Pass System🚌
 
 ## Overview
 The inefficiencies of traditional paper-based bus pass systems have led to delays, increased operational costs, and environmental concerns. This project proposes a simulated QR code-based bus pass system to enhance efficiency, reduce costs, and promote sustainability. By leveraging digital technology, this system provides a seamless and user-friendly experience for passengers while streamlining public transportation processes.
@@ -57,15 +57,13 @@ The inefficiencies of traditional paper-based bus pass systems have led to delay
 - **Fair Calculation**
   ![Payment Interface](screenshots/charge1.jpg)
 
-If your screenshots are not displaying correctly, ensure you have committed and pushed the images to your GitHub repository.
-
 ## Future Enhancements
 - NFC-based tap-and-go functionality
 - Offline mode for QR code scanning
 - AI-driven route recommendations
 
 ## Contributors
-- Samarakoon S.
+- Samarakoon S.(Me)
 - SILVA A.D.K
 • KAVINDI A.L.S.J 
 • MANOHARI G.R.S.H 
