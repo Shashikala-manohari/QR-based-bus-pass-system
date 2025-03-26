@@ -40,13 +40,13 @@ The inefficiencies of traditional paper-based bus pass systems have led to delay
 
 ## Screenshots
 - **Login Screen**
-  ![Login Screen](screenshots/login.png)
+  ![Login Screen](screenshots/login.jpg)
 - **Home Screen**
-  ![Home Screen](screenshots/home.png)
+  ![Home Screen](screenshots/home.jpg)
 - **QR Code Generation**
-  ![QR Code](screenshots/qrcode.png)
+  ![QR Code](screenshots/qrcode.jpg)
 - **Payment Interface**
-  ![Payment Interface](screenshots/payment.png)
+  ![Payment Interface](screenshots/payment.jpg)
 
 If your screenshots are not displaying correctly, ensure you have committed and pushed the images to your GitHub repository.
 
