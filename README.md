@@ -63,6 +63,9 @@ The inefficiencies of traditional paper-based bus pass systems have led to delay
 - Offline mode for QR code scanning
 - AI-driven route recommendations
 
+## License
+This project is licensed under the MIT License.
+
 ## Contributors
 - Samarakoon S.(Me)
 - SILVA A.D.K
