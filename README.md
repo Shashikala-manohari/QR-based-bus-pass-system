@@ -39,14 +39,23 @@ The inefficiencies of traditional paper-based bus pass systems have led to delay
 - **User Convenience**: Provides an easy-to-use digital solution for fare management.
 
 ## Screenshots
+- **Splash Screen**
+  ![Splash Screen](screenshots/home.jpg)
+  ![Splash Screen](screenshots/login0.jpg)
 - **Login Screen**
-  ![Login Screen](screenshots/login.jpg)
+  ![Login Screen](screenshots/login5.jpg)
+  ![Login Screen](screenshots/login2.jpg)
 - **Home Screen**
-  ![Home Screen](screenshots/home.jpg)
+  ![Home Screen](screenshots/home2.jpg)
+  ![Home Screen](screenshots/home1.jpg)
 - **QR Code Generation**
   ![QR Code](screenshots/qrcode.jpg)
 - **Payment Interface**
   ![Payment Interface](screenshots/payment.jpg)
+- **Transaction History**
+  ![Payment Interface](screenshots/charge2.jpg)
+- **Fair Calculation**
+  ![Payment Interface](screenshots/charge1.jpg)
 
 If your screenshots are not displaying correctly, ensure you have committed and pushed the images to your GitHub repository.
 
