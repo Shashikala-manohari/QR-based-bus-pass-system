@@ -67,10 +67,10 @@ The inefficiencies of traditional paper-based bus pass systems have led to delay
 This project is licensed under the MIT License.
 
 ## Contributors
-- Samarakoon S
+- SAMARAKOON S
+- MANOHARI G.R.S.H 
 - SILVA A.D.K
 - KAVINDI A.L.S.J 
-- MANOHARI G.R.S.H 
 - LAKSHAN K.A.S 
 - SHAKITHTHIYAN P 
 
